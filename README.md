@@ -1,70 +1,175 @@
 # EscrowAgent
 
-## What it is
-EscrowAgent is an AI-assisted escrow dApp for freelance tasks. A client creates a task, locks ETH in a smart contract, the worker submits proof of work, and the client releases payment. If the deadline passes, the client can refund the escrow.
-
-## Problem
-Online freelance work depends on trust. Clients do not want to pay before work is delivered, and workers do not want to work without proof that payment is reserved.
-
-## Solution
-EscrowAgent uses a smart contract as a neutral enforcement layer:
-- client creates task
-- client funds escrow
-- worker submits proof URL + proof hash
-- client approves release
-- client can refund after deadline if conditions are unmet
-
-## Why this matters
-This fits the “Agents that cooperate” theme because it lets two parties coordinate around a neutral onchain commitment instead of trusting a centralized platform.
+EscrowAgent is a local-first hackathon escrow dApp for freelance task payments. A client creates a task, funds it with ETH, the worker submits proof as a URL plus content hash, and the client either releases funds or refunds after the deadline.
 
 ## Features
-- Create task with worker address, amount, and deadline
-- Fund escrow in ETH
-- Submit work proof
-- Approve release
-- Refund after deadline
-- Task details/status view
-- AI agreement assist for structured task drafting
 
-## Tech stack
-- Next.js
-- Tailwind CSS
-- Solidity
-- Hardhat
-- MetaMask
-- Local Hardhat network for demo/testing
+- Next.js frontend with Tailwind and a clean demo-ready UI
+- Solidity escrow contract with Hardhat
+- MetaMask wallet connect for local testing
+- Core flow pages:
+  - Create Task
+  - Fund Task
+  - Submit Work
+  - Approve Release
+  - Task Details
+- Deadline per task
+- Client refund after deadline if the task is funded but not released
+- On-chain task status tracking:
+  - created
+  - funded
+  - work submitted
+  - released
+  - refunded
+- Task ID surfaced from the `TaskCreated` event
+- Lightweight AI agreement generator with OpenAI support and mock fallback
 
-## How it works
-1. Client creates a task
-2. Smart contract stores terms
-3. Client funds escrow
-4. Worker submits proof
-5. Client approves release
-6. Or client refunds after deadline
+## Architecture
+
+- Frontend: Next.js App Router in `app/`
+- Shared UI: `components/`
+- Contract helpers and task formatting: `lib/`
+- Solidity contract: `contracts/EscrowAgent.sol`
+- Hardhat config and deploy script:
+  - `hardhat.config.ts`
+  - `scripts/deploy.ts`
+- AI agreement route: `app/api/agreement/route.ts`
 
 ## Local setup
-1. npm install
-2. npx hardhat compile
-3. npx hardhat node
-4. npx hardhat run scripts/deploy.ts --network localhost
-5. add deployed contract address to .env.local
-6. npm run dev
 
-## MetaMask local setup
-- RPC URL: http://127.0.0.1:8545
-- Chain ID: 31337
-- Currency Symbol: ETH
-- Import two Hardhat accounts: client and worker
+Prerequisites:
 
-## Demo flows
-### Happy path
-Create → Fund → Submit → Approve
+- Node.js 20+
+- MetaMask in your browser
 
-### Protection path
-Create → Fund → Wait until deadline → Refund
+Install dependencies:
 
-## Limitations
-- Built for hackathon MVP/demo use
-- Local network demo first
-- No advanced dispute arbitration yet
-- No production security audit
+```bash
+npm install
+```
+
+Copy environment defaults if needed:
+
+```bash
+copy .env.example .env.local
+```
+
+`OPENAI_API_KEY` is optional. If it is not set, the AI agreement generator uses a mock response so the demo still works.
+
+## Compile, deploy, run
+
+1. Compile the contract:
+
+```bash
+npx hardhat compile
+```
+
+2. Start a local Hardhat node:
+
+```bash
+npx hardhat node
+```
+
+3. In a second terminal, deploy to localhost:
+
+```bash
+npx hardhat run scripts/deploy.ts --network localhost
+```
+
+The deploy script automatically writes the deployed address to `.env.local` as:
+
+```bash
+NEXT_PUBLIC_ESCROW_CONTRACT_ADDRESS=0x...
+```
+
+4. Start the frontend:
+
+```bash
+npm run dev
+```
+
+5. Open the app:
+
+```bash
+http://localhost:3000
+```
+
+## MetaMask local network setup
+
+Add a custom network in MetaMask with:
+
+- Network name: `Hardhat Local`
+- RPC URL: `http://127.0.0.1:8545`
+- Chain ID: `31337`
+- Currency symbol: `ETH`
+
+## Import Hardhat test accounts into MetaMask
+
+When `npx hardhat node` starts, it prints funded test accounts and private keys.
+
+Import at least two accounts into MetaMask:
+
+- Account 1: use as the client
+- Account 2: use as the worker
+
+In MetaMask:
+
+1. Click the account menu.
+2. Choose `Import Account`.
+3. Paste one of the private keys from the Hardhat node output.
+
+## Demo flow
+
+1. Connect MetaMask in the app using the client wallet.
+2. Open `Create Task`.
+3. Optionally generate an agreement draft from a plain-English brief.
+4. Enter the worker wallet, budget, and deadline.
+5. Create the task and note the displayed task ID.
+6. Fund the task from the client wallet on `Fund Task`.
+7. Switch MetaMask to the worker wallet.
+8. Submit proof URL and proof hash on `Submit Work`.
+9. Switch back to the client wallet.
+10. Review the task on `Task Details`.
+11. Approve release on `Approve Release`.
+
+Refund demo:
+
+1. Create and fund a task with a short deadline.
+2. Wait until the deadline passes.
+3. Open `Task Details`.
+4. Load the task and click `Refund After Deadline`.
+
+## AI agreement generator
+
+The agreement generator accepts a plain-English task brief and returns:
+
+- title
+- worker role
+- budget suggestion
+- deadline suggestion
+- acceptance criteria
+- short agreement summary
+
+If `OPENAI_API_KEY` is missing or the live request fails, the route falls back to a deterministic mock response so the demo stays usable.
+
+## Hackathon positioning
+
+EscrowAgent is intentionally simple:
+
+- no database
+- no authentication
+- no dispute resolution layer
+- no off-chain job queue
+
+That makes it strong for demos:
+
+- easy to explain
+- fully local
+- visible on-chain state
+- real MetaMask interactions
+- clear AI-assisted story for turning briefs into escrow tasks
+
+## Notes
+
+- Manual browser and MetaMask interaction is still required for wallet connection, account switching, and transaction confirmation.
+- The AI agreement generator is assistive only. It does not auto-enforce acceptance criteria on-chain.

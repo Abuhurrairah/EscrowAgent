@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  @apply min-h-screen bg-sand text-ink antialiased;
+  background-image:
+    radial-gradient(circle at top left, rgba(255, 107, 53, 0.18), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(31, 95, 74, 0.2), transparent 28%);
+}
+
+a {
+  @apply text-inherit no-underline;
+}
+
+input {
+  @apply w-full rounded-2xl border border-ink/15 bg-white/80 px-4 py-3 text-sm outline-none transition;
+}
+
+input:focus {
+  @apply border-ember ring-2 ring-ember/20;
+}
+
+button {
+  @apply transition;
+}
